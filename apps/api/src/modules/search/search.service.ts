@@ -28,6 +28,7 @@ export class SearchService implements OnModuleInit {
   private readonly client: Client;
   private readonly indexName = "listings";
   private readonly logger = new Logger(SearchService.name);
+  private isReady = false;
 
   constructor(private readonly config: ConfigService) {
     this.client = new Client({
@@ -36,7 +37,9 @@ export class SearchService implements OnModuleInit {
   }
 
   async onModuleInit() {
+    await this.waitForCluster();
     await this.ensureIndex();
+    this.isReady = true;
   }
 
   private async ensureIndex() {
@@ -68,6 +71,31 @@ export class SearchService implements OnModuleInit {
     }
   }
 
+  private async waitForCluster(maxAttempts = 5, backoffMs = 2000) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await this.client.cluster.health({});
+        this.logger.log("OpenSearch cluster is healthy");
+        return;
+      } catch (err) {
+        this.logger.warn(
+          `OpenSearch health check failed (attempt ${attempt}/${maxAttempts}): ${
+            (err as Error).message
+          }`
+        );
+        if (attempt === maxAttempts) {
+          this.logger.error("OpenSearch cluster not reachable, search will be disabled");
+          return;
+        }
+        await this.sleep(backoffMs);
+      }
+    }
+  }
+
+  private sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   async indexListing(doc: ListingDocument) {
     try {
       await this.client.index({
@@ -82,6 +110,11 @@ export class SearchService implements OnModuleInit {
   }
 
   async search(params: SearchParams): Promise<string[]> {
+    if (!this.isReady) {
+      this.logger.warn("Search service not ready (OpenSearch unavailable)");
+      return [];
+    }
+
     const size = params.size ?? 50;
     const must: any[] = [];
     const filter: any[] = [{ term: { status: ListingStatus.PUBLISHED } }];

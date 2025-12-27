@@ -83,8 +83,8 @@ export class SearchService implements OnModuleInit {
 
   async search(params: SearchParams): Promise<string[]> {
     const size = params.size ?? 50;
-    const must = [];
-    const filter = [{ term: { status: ListingStatus.PUBLISHED } }];
+    const must: any[] = [];
+    const filter: any[] = [{ term: { status: ListingStatus.PUBLISHED } }];
 
     if (params.q) {
       must.push({

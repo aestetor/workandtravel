@@ -10,7 +10,8 @@
     "lint": "eslint \"src/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\"",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "reindex:listings": "ts-node scripts/reindex-listings.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",
@@ -22,6 +23,7 @@
     "@nestjs/swagger": "^7.1.14",
     "@opensearch-project/opensearch": "^2.12.0",
     "@prisma/client": "^5.9.0",
+    "dotenv": "^16.3.1",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",

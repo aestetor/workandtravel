@@ -1,0 +1,15 @@
+node_modules
+.turbo
+.next
+dist
+coverage
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+tmp
+.env
+.env.*
+apps/**/node_modules
+apps/**/dist

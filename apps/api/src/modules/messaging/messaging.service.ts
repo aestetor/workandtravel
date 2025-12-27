@@ -1,4 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
 import { CreateMessageDto } from "./dto/create-message.dto";
@@ -46,7 +47,7 @@ export class MessagingService {
         threadId,
         senderId: userId,
         body: dto.body,
-        attachments: dto.attachments
+        attachments: dto.attachments as Prisma.InputJsonValue
       }
     });
   }

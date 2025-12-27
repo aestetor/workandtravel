@@ -82,10 +82,9 @@ export class ApplicationsService {
       throw new ForbiddenException("Traveler can cancel");
     }
 
-    if (
-      [ApplicationStatus.ACCEPTED, ApplicationStatus.REJECTED].includes(dto.status) &&
-      !isHost
-    ) {
+    const isHostDecision =
+      dto.status === ApplicationStatus.ACCEPTED || dto.status === ApplicationStatus.REJECTED;
+    if (isHostDecision && !isHost) {
       throw new ForbiddenException("Only host can accept/reject");
     }
 

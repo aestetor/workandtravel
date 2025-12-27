@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { PaymentStatus } from "@prisma/client";
+import { ApplicationStatus, PaymentStatus } from "@prisma/client";
 
 import { CreatePaymentDto } from "./dto/create-payment.dto";
 import { PaymentIntent, PaymentProvider } from "./payment.provider";
@@ -58,7 +58,7 @@ export class PaymentsService {
       });
       await this.prisma.application.update({
         where: { id: payment.applicationId },
-        data: { status: PaymentStatus.ACCEPTED }
+        data: { status: ApplicationStatus.ACCEPTED }
       });
     }
     return result;

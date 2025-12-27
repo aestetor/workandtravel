@@ -21,6 +21,7 @@ RUN pnpm --filter api build
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+COPY --from=deps /root/.local/share/pnpm /root/.local/share/pnpm
 COPY --from=build /app/apps/api/dist ./dist
 COPY --from=deps /app/node_modules ./node_modules
 COPY apps/api/package.json ./

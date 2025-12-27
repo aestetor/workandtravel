@@ -1,0 +1,16 @@
+{
+  "name": "work-travel-monorepo",
+  "private": true,
+  "packageManager": "pnpm@8.15.4",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5",
+    "turbo": "^1.13.4",
+    "typescript": "^5.3.3"
+  }
+}

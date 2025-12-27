@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  HOST
+  TRAVELER
+  ADMIN
+}
+
+enum ListingStatus {
+  DRAFT
+  PUBLISHED
+  PAUSED
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  INITIATED
+  PAID
+  FAILED
+  CANCELLED
+}
+
+model User {
+  id                      String        @id @default(uuid())
+  email                   String        @unique
+  passwordHash            String
+  role                    Role          @default(TRAVELER)
+  verified                Boolean       @default(false)
+  locale                  String?       @default("ru")
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  profile                 Profile?
+  applicationsAsTraveler  Application[] @relation("TravelerApplications")
+  threadsAsHost           Thread[]      @relation("HostThreads")
+  threadsAsTraveler       Thread[]      @relation("TravelerThreads")
+  messages                Message[]     @relation("UserMessages")
+  reviewsAuthored         Review[]      @relation("ReviewsAuthored")
+  reviewsReceived         Review[]      @relation("ReviewsReceived")
+  payments                Payment[]
+}
+
+model Profile {
+  id            String       @id @default(uuid())
+  userId        String       @unique
+  user          User         @relation(fields: [userId], references: [id])
+  name          String
+  bio           String?
+  city          String?
+  country       String?      @default("Kazakhstan")
+  lat           Float?
+  lng           Float?
+  languages     String[]     @default([])
+  skills        String[]     @default([])
+  photoUrl      String?
+  hostProfile   HostProfile?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model HostProfile {
+  id             String     @id @default(uuid())
+  profileId      String     @unique
+  profile        Profile    @relation(fields: [profileId], references: [id])
+  houseRules     String?
+  amenities      String[]   @default([])
+  dietary        String[]   @default([])
+  householdSize  Int?
+  listings       Listing[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+
+model Listing {
+  id             String           @id @default(uuid())
+  hostProfileId  String
+  title          String
+  description    String
+  city           String
+  country        String           @default("Kazakhstan")
+  lat            Float?
+  lng            Float?
+  tags           String[]         @default([])
+  housing        String?
+  meals          String?
+  houseRules     String?
+  status         ListingStatus    @default(DRAFT)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  hostProfile    HostProfile      @relation(fields: [hostProfileId], references: [id])
+  photos         ListingPhoto[]
+  availability   Availability[]
+  applications   Application[]
+
+  @@index([status, city, country])
+}
+
+model ListingPhoto {
+  id         String   @id @default(uuid())
+  listingId  String
+  url        String
+  sortOrder  Int      @default(0)
+  listing    Listing  @relation(fields: [listingId], references: [id])
+}
+
+model Availability {
+  id         String   @id @default(uuid())
+  listingId  String
+  startDate  DateTime
+  endDate    DateTime
+  slots      Int      @default(1)
+  listing    Listing  @relation(fields: [listingId], references: [id])
+
+  @@index([listingId, startDate, endDate])
+}
+
+model Application {
+  id          String             @id @default(uuid())
+  listingId   String
+  travelerId  String
+  message     String
+  status      ApplicationStatus  @default(PENDING)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  listing     Listing            @relation(fields: [listingId], references: [id])
+  traveler    User               @relation("TravelerApplications", fields: [travelerId], references: [id])
+  thread      Thread?
+  review      Review?
+  payment     Payment?
+}
+
+model Thread {
+  id           String    @id @default(uuid())
+  applicationId String   @unique
+  hostId       String
+  travelerId   String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  application  Application @relation(fields: [applicationId], references: [id])
+  host         User        @relation("HostThreads", fields: [hostId], references: [id])
+  traveler     User        @relation("TravelerThreads", fields: [travelerId], references: [id])
+  messages     Message[]
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  threadId   String
+  senderId   String
+  body       String
+  attachments Json?
+  createdAt  DateTime @default(now())
+  thread     Thread   @relation(fields: [threadId], references: [id])
+  sender     User     @relation("UserMessages", fields: [senderId], references: [id])
+
+  @@index([threadId])
+}
+
+model Review {
+  id           String   @id @default(uuid())
+  applicationId String  @unique
+  fromUserId   String
+  toUserId     String
+  rating       Int
+  text         String?
+  publishedAt  DateTime?
+  createdAt    DateTime @default(now())
+  application  Application @relation(fields: [applicationId], references: [id])
+  fromUser     User        @relation("ReviewsAuthored", fields: [fromUserId], references: [id])
+  toUser       User        @relation("ReviewsReceived", fields: [toUserId], references: [id])
+}
+
+model Payment {
+  id                String        @id @default(uuid())
+  applicationId     String        @unique
+  userId            String
+  amountKzt         Int
+  currency          String        @default("KZT")
+  status            PaymentStatus @default(INITIATED)
+  cpTransactionId   String?
+  feeBreakdown      Json?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  application       Application   @relation(fields: [applicationId], references: [id])
+  user              User          @relation(fields: [userId], references: [id])
+}
+
+model BlogPost {
+  id         String   @id @default(uuid())
+  slug       String   @unique
+  title      String
+  excerpt    String?
+  content    String
+  published  Boolean  @default(false)
+  publishedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

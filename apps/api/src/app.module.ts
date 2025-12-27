@@ -15,24 +15,25 @@ import {
   SearchModule
 } from "./modules";
 import { PrismaModule } from "./prisma/prisma.module";
+import { HealthController } from "./health/health.controller";
 
 @Module({
   imports: [
-  ConfigModule.forRoot({
-    isGlobal: true
+    ConfigModule.forRoot({
+      isGlobal: true
   }),
   PrismaModule,
   AuthModule,
   ProfilesModule,
   ListingsModule,
   ApplicationsModule,
-  MessagingModule,
-  ReviewsModule,
-  PaymentsModule,
-  ContentModule,
-  SearchModule
-],
-  controllers: [AppController],
+    MessagingModule,
+    ReviewsModule,
+    PaymentsModule,
+    ContentModule,
+    SearchModule
+  ],
+  controllers: [AppController, HealthController],
   providers: [AppService]
 })
 export class AppModule {}

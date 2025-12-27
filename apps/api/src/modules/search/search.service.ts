@@ -163,4 +163,14 @@ export class SearchService implements OnModuleInit {
       return [];
     }
   }
+
+  async checkHealth() {
+    try {
+      const res = await this.client.cluster.health({ timeout: "2s" });
+      return { ok: true, status: (res.body as any)?.status ?? "unknown" };
+    } catch (err) {
+      this.logger.warn(`OpenSearch health check failed: ${(err as Error).message}`);
+      return { ok: false, error: (err as Error).message };
+    }
+  }
 }

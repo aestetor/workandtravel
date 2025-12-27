@@ -5,27 +5,54 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { CreateAvailabilityDto } from "./dto/create-availability.dto";
 import { CreateListingDto } from "./dto/create-listing.dto";
 import { UpdateListingDto } from "./dto/update-listing.dto";
+import { SearchService } from "../search/search.service";
 
 @Injectable()
 export class ListingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly searchService: SearchService
+  ) {}
 
   async list(params: { city?: string; q?: string; tags?: string[]; onlyPublished?: boolean }) {
-    return this.prisma.listing.findMany({
-      where: {
-        city: params.city ? { contains: params.city, mode: "insensitive" } : undefined,
-        status: params.onlyPublished ? ListingStatus.PUBLISHED : undefined,
-        OR: params.q
-          ? [
-              { title: { contains: params.q, mode: "insensitive" } },
-              { description: { contains: params.q, mode: "insensitive" } }
-            ]
-          : undefined,
-        tags: params.tags ? { hasSome: params.tags } : undefined
-      },
-      include: { photos: true, hostProfile: { include: { profile: true } }, availability: true },
-      orderBy: { createdAt: "desc" }
+    const ids = await this.searchService.search({
+      city: params.city,
+      q: params.q,
+      tags: params.tags,
+      size: 50
     });
+
+    if (ids.length === 0) {
+      // Fallback to DB when index is empty or no hits
+      return this.prisma.listing.findMany({
+        where: {
+          city: params.city ? { contains: params.city, mode: "insensitive" } : undefined,
+          status: params.onlyPublished ? ListingStatus.PUBLISHED : undefined,
+          OR: params.q
+            ? [
+                { title: { contains: params.q, mode: "insensitive" } },
+                { description: { contains: params.q, mode: "insensitive" } }
+              ]
+            : undefined,
+          tags: params.tags ? { hasSome: params.tags } : undefined
+        },
+        include: { photos: true, hostProfile: { include: { profile: true } }, availability: true },
+        orderBy: { createdAt: "desc" }
+      });
+    }
+
+    const listings = await this.prisma.listing.findMany({
+      where: {
+        id: { in: ids },
+        status: params.onlyPublished ? ListingStatus.PUBLISHED : undefined
+      },
+      include: { photos: true, hostProfile: { include: { profile: true } }, availability: true }
+    });
+
+    const order = new Map(ids.map((id, idx) => [id, idx]));
+    return listings.sort(
+      (a, b) => (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER)
+    );
   }
 
   async listMine(userId: string) {
@@ -72,6 +99,19 @@ export class ListingsService {
       include: { photos: true, hostProfile: { include: { profile: true } } }
     });
 
+    await this.searchService.indexListing({
+      id: listing.id,
+      title: listing.title,
+      description: listing.description,
+      city: listing.city,
+      country: listing.country,
+      tags: listing.tags,
+      status: listing.status,
+      lat: listing.lat,
+      lng: listing.lng,
+      createdAt: listing.createdAt.toISOString()
+    });
+
     return listing;
   }
 
@@ -89,7 +129,7 @@ export class ListingsService {
       throw new ForbiddenException("Not your listing");
     }
 
-    return this.prisma.listing.update({
+    const updated = await this.prisma.listing.update({
       where: { id: listingId },
       data: {
         title: dto.title,
@@ -111,6 +151,21 @@ export class ListingsService {
       },
       include: { photos: true, availability: true }
     });
+
+    await this.searchService.indexListing({
+      id: updated.id,
+      title: updated.title,
+      description: updated.description,
+      city: updated.city,
+      country: updated.country,
+      tags: updated.tags,
+      status: updated.status,
+      lat: updated.lat,
+      lng: updated.lng,
+      createdAt: updated.createdAt.toISOString()
+    });
+
+    return updated;
   }
 
   async getOne(listingId: string) {

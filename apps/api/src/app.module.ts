@@ -11,7 +11,8 @@ import {
   MessagingModule,
   PaymentsModule,
   ProfilesModule,
-  ReviewsModule
+  ReviewsModule,
+  SearchModule
 } from "./modules";
 import { PrismaModule } from "./prisma/prisma.module";
 
@@ -24,11 +25,12 @@ import { PrismaModule } from "./prisma/prisma.module";
   AuthModule,
   ProfilesModule,
   ListingsModule,
-    ApplicationsModule,
-    MessagingModule,
-    ReviewsModule,
-    PaymentsModule,
-  ContentModule
+  ApplicationsModule,
+  MessagingModule,
+  ReviewsModule,
+  PaymentsModule,
+  ContentModule,
+  SearchModule
 ],
   controllers: [AppController],
   providers: [AppService]

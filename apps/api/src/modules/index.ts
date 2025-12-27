@@ -6,3 +6,4 @@ export * from "./messaging/messaging.module";
 export * from "./reviews/reviews.module";
 export * from "./payments/payments.module";
 export * from "./content/content.module";
+export * from "./search/search.module";

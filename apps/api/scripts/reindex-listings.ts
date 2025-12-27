@@ -1,4 +1,4 @@
-import path from "path";
+import * as path from "path";
 
 import { Client } from "@opensearch-project/opensearch";
 import { ListingStatus, PrismaClient } from "@prisma/client";

@@ -16,22 +16,24 @@ import {
 } from "./modules";
 import { PrismaModule } from "./prisma/prisma.module";
 import { HealthController } from "./health/health.controller";
+import { MetricsModule } from "./metrics/metrics.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true
-  }),
-  PrismaModule,
-  AuthModule,
-  ProfilesModule,
-  ListingsModule,
-  ApplicationsModule,
+    }),
+    PrismaModule,
+    AuthModule,
+    ProfilesModule,
+    ListingsModule,
+    ApplicationsModule,
     MessagingModule,
     ReviewsModule,
     PaymentsModule,
     ContentModule,
-    SearchModule
+    SearchModule,
+    MetricsModule
   ],
   controllers: [AppController, HealthController],
   providers: [AppService]
